@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as dat from "dat.gui";
+import Stats from 'three/examples/jsm/libs/stats.module';
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
   45, //field of view
@@ -9,14 +10,9 @@ const camera = new THREE.PerspectiveCamera(
   1000 //far
 );
 
-// renderer - anti-aliasing
-/* const renderer = new THREE.WebGLRenderer({ antialias: true })
-renderer.physicallyCorrectLights = true
-renderer.setSize(width, height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)) */
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.physicallyCorrectLights = true;
+const renderer = new THREE.WebGLRenderer({ antialias: true });// renderer - anti-aliasing
+renderer.useLegacyLights = true;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight); //the width and height of the area we want to fill with our app
 document.body.appendChild(renderer.domElement);
@@ -37,7 +33,7 @@ light.position.set(50, 50, 50);
 scene.add(light);
 
 // create a cube
-const geometry = new THREE.BoxGeometry(10, 10, 10); //instance of boxGeometry class
+const geometry = new THREE.BoxGeometry(10, 10, 10, 5, 5, 5); //instance of boxGeometry class
 const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // a material to color it
 const cube = new THREE.Mesh(geometry, material); //fusion of geometry with material to result a mesh = 3D object
 
@@ -61,8 +57,8 @@ box.setFromCenterAndSize(
   new THREE.Vector3(30, 30, 30)
 );
 
-const helper = new THREE.Box3Helper(box, 0xffff00);
-scene.add(helper);
+const boxHelper = new THREE.Box3Helper(box, 0xffff00);
+scene.add(boxHelper);
 
 //match the plane to the grid
 plane.rotation.x = -0.5 * Math.PI;
@@ -75,36 +71,67 @@ camera.position.set(-10, 30, 30);
 //update everytime we change position of camera
 orbit.update();
 
-//gui to change mesh properties
+//GUI to change mesh properties
 const gui = new dat.GUI();
-const options = {
-  cubeColor: "#00ff00",
+const cubeFolder = gui.addFolder('Mesh');
+const boxFolder = gui.addFolder('Box');
+//Mesh options
+const meshOptions = {
+  Color: cube.material.color.getHex(), //get the color of the mesh
   wireframe: false,
 };
+//box options
+const boxOptions = {
+  Color : boxHelper.material.color.getHex(), //get the color of the boxHelper
+};
 //change mesh color
-gui.addColor(options, "cubeColor").onChange(function (e) {
+cubeFolder.addColor(meshOptions, 'Color').onChange(function (e) {
   cube.material.color.set(e);
 });
 //change wireframe
-gui.add(options, "wireframe").onChange((e) => {
+cubeFolder.add(meshOptions, 'wireframe').onChange((e) => {
   cube.material.wireframe = e;
 });
+cubeFolder.open()
+
+//Change Box color
+boxFolder.addColor(boxOptions, 'Color').onChange((e) => {
+  boxHelper.material.color.set(e)
+});
+
+
+//box dimentions
+const scaleFolder = cubeFolder.addFolder('Scale')
+scaleFolder.add(cube.scale, 'x', 0, 3).name('scale X');
+scaleFolder.add(cube.scale, 'y', 0, 3).name('scale Y');
+scaleFolder.add(cube.scale, 'z', 0, 3).name('scale Z');
+scaleFolder.open()
+
+//box rotation
+const rotationFolder = cubeFolder.addFolder('Rotation')
+rotationFolder.add(cube.rotation, 'x', 0, Math.PI).name('rotate X');
+rotationFolder.add(cube.rotation, 'y', 0, Math.PI).name('rotate Y');
+rotationFolder.add(cube.rotation, 'z', 0, Math.PI).name('rotate Z');
+rotationFolder.open();
+
+const stats = new Stats()
+document.body.appendChild(stats.dom)
 
 //moving object
 function setupKeyControls() {
   document.onkeydown = function (e) {
     switch (e.key) {
       case "ArrowRight":
-        cube.position.x += 0.1;
+        cube.position.x += 0.5;
         break;
       case "ArrowLeft":
-        cube.position.x -= 0.1;
+        cube.position.x -= 0.5;
         break;
       case "ArrowUp":
-        cube.position.z -= 0.1;
+        cube.position.z -= 0.5;
         break;
       case "ArrowDown":
-        cube.position.z += 0.1;
+        cube.position.z += 0.5;
         break;
       case "d":
         cube.position.set(0, 5, 0);
@@ -112,6 +139,8 @@ function setupKeyControls() {
     }
   };
 }
+
+
  
 function animate() {
   requestAnimationFrame(animate);
@@ -121,6 +150,7 @@ function animate() {
   cube.rotation.x += 0.01;
   cube.rotation.y += 0.01; 
   */
+  stats.update();
   renderer.render(scene, camera);
 }
 animate();
