@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as dat from "dat.gui";
-import Stats from 'three/examples/jsm/libs/stats.module';
+import Stats from "three/examples/jsm/libs/stats.module";
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
   45, //field of view
@@ -10,8 +10,7 @@ const camera = new THREE.PerspectiveCamera(
   1000 //far
 );
 
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });// renderer - anti-aliasing
+const renderer = new THREE.WebGLRenderer({ antialias: true }); // renderer - anti-aliasing
 renderer.useLegacyLights = true;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight); //the width and height of the area we want to fill with our app
@@ -73,8 +72,8 @@ orbit.update();
 
 //GUI to change mesh properties
 const gui = new dat.GUI();
-const cubeFolder = gui.addFolder('Mesh');
-const boxFolder = gui.addFolder('Box');
+const cubeFolder = gui.addFolder("Mesh");
+const boxFolder = gui.addFolder("Box");
 //Mesh options
 const meshOptions = {
   Color: cube.material.color.getHex(), //get the color of the mesh
@@ -82,40 +81,41 @@ const meshOptions = {
 };
 //box options
 const boxOptions = {
-  Color : boxHelper.material.color.getHex(), //get the color of the boxHelper
+  Color: boxHelper.material.color.getHex(), //get the color of the boxHelper
 };
 //change mesh color
-cubeFolder.addColor(meshOptions, 'Color').onChange(function (e) {
+cubeFolder.addColor(meshOptions, "Color").onChange(function (e) {
   cube.material.color.set(e);
 });
 //change wireframe
-cubeFolder.add(meshOptions, 'wireframe').onChange((e) => {
+cubeFolder.add(meshOptions, "wireframe").onChange((e) => {
   cube.material.wireframe = e;
 });
-cubeFolder.open()
+cubeFolder.open();
 
 //Change Box color
-boxFolder.addColor(boxOptions, 'Color').onChange((e) => {
-  boxHelper.material.color.set(e)
+boxFolder.addColor(boxOptions, "Color").onChange((e) => {
+  boxHelper.material.color.set(e);
 });
 
-
 //box dimentions
-const scaleFolder = cubeFolder.addFolder('Scale')
-scaleFolder.add(cube.scale, 'x', 0, 3).name('scale X');
-scaleFolder.add(cube.scale, 'y', 0, 3).name('scale Y');
-scaleFolder.add(cube.scale, 'z', 0, 3).name('scale Z');
-scaleFolder.open()
+const scaleFolder = cubeFolder.addFolder("Scale");
+scaleFolder.add(cube.scale, "x", 0.1, 3).name("scale X");
+scaleFolder.add(cube.scale, "y", 0.1, 3).name("scale Y");
+scaleFolder.add(cube.scale, "z", 0.1, 3).name("scale Z");
+scaleFolder.open();
 
 //box rotation
-const rotationFolder = cubeFolder.addFolder('Rotation')
-rotationFolder.add(cube.rotation, 'x', 0, Math.PI).name('rotate X');
-rotationFolder.add(cube.rotation, 'y', 0, Math.PI).name('rotate Y');
-rotationFolder.add(cube.rotation, 'z', 0, Math.PI).name('rotate Z');
+const rotationFolder = cubeFolder.addFolder("Rotation");
+rotationFolder.add(cube.rotation, "x", 0, Math.PI).name("rotate X");
+rotationFolder.add(cube.rotation, "y", 0, Math.PI).name("rotate Y");
+rotationFolder.add(cube.rotation, "z", 0, Math.PI).name("rotate Z");
 rotationFolder.open();
 
-const stats = new Stats()
-document.body.appendChild(stats.dom)
+//load 3D objects
+
+const stats = new Stats();
+document.body.appendChild(stats.dom);
 
 //moving object
 function setupKeyControls() {
@@ -135,16 +135,40 @@ function setupKeyControls() {
         break;
       case "d":
         cube.position.set(0, 5, 0);
+        cube.rotation.set(0, 0, 0);
         break;
     }
   };
 }
 
+function onDoubleClick() {
+  document.ondblclick = (e) => {
+    // Clone the original mesh
+    const clonedMesh = cube.clone();
+    const cloneGap = 0.1; //gap
+    let clonePosition = cube.position.clone().add(
+      new THREE.Vector3(cloneGap, 0, 0) // Adjust x, y, and z coordinates as needed
+    );
 
- 
+    // Set the final position of the cloned mesh
+    clonedMesh.position.copy(clonePosition);
+
+    // Set the position of the cloned mesh to a random location
+    clonedMesh.position.set(
+      Math.random() * 10 - 5, // x-coordinate
+      Math.random() * 10 - 5, // y-coordinate
+      Math.random() * 10 - 5 // z-coordinate
+    );
+
+    // Add the cloned mesh to the scene
+    scene.add(clonedMesh);
+  };
+}
+
 function animate() {
   requestAnimationFrame(animate);
   setupKeyControls();
+  onDoubleClick();
   /*  
   rotation animation
   cube.rotation.x += 0.01;
