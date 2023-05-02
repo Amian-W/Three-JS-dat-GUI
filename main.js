@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import * as dat from "dat.gui";
 import Stats from "three/examples/jsm/libs/stats.module";
 const scene = new THREE.Scene();
@@ -16,6 +17,25 @@ renderer.useLegacyLights = true;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight); //the width and height of the area we want to fill with our app
 document.body.appendChild(renderer.domElement);
+
+//Load a STL Model 
+const input = document.querySelector("input");
+input.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function (event) {
+    const contents = event.target.result;
+    const loader = new STLLoader();
+    const geometry = loader.parse(contents);
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    const loadedMesh = new THREE.Mesh(geometry, material);
+    scene.add(loadedMesh);
+  };
+
+  reader.readAsArrayBuffer(file);
+});
+
 
 //change scene color
 renderer.setClearColor(0xf2f2f2);
@@ -39,7 +59,6 @@ const cube = new THREE.Mesh(geometry, material); //fusion of geometry with mater
 
 scene.add(cube); // add mesh to the scene
 
-console.log(geometry.getAttribute);
 //set cube position
 cube.position.set(0, 5, 0);
 
