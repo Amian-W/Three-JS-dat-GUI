@@ -10,7 +10,8 @@ const camera = new THREE.PerspectiveCamera(
   1000 //far
 );
 
-const renderer = new THREE.WebGLRenderer({ antialias: true }); // renderer - anti-aliasing
+const canvas = document.querySelector('.webgl');
+const renderer = new THREE.WebGLRenderer({canvas},{ antialias: true }); // renderer - anti-aliasing
 renderer.useLegacyLights = true;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight); //the width and height of the area we want to fill with our app
@@ -78,6 +79,7 @@ const boxFolder = gui.addFolder("Box");
 const meshOptions = {
   Color: cube.material.color.getHex(), //get the color of the mesh
   wireframe: false,
+  scale : 0,
 };
 //box options
 const boxOptions = {
@@ -103,6 +105,10 @@ const scaleFolder = cubeFolder.addFolder("Scale");
 scaleFolder.add(cube.scale, "x", 0.1, 3).name("scale X");
 scaleFolder.add(cube.scale, "y", 0.1, 3).name("scale Y");
 scaleFolder.add(cube.scale, "z", 0.1, 3).name("scale Z");
+scaleFolder.add(meshOptions, 'scale',0.1, 3, 0.1).onChange( e => {
+  cube.scale.set(e,e,e);
+  cube.position.set(0, 0, 0);
+});
 scaleFolder.open();
 
 //box rotation
@@ -112,7 +118,7 @@ rotationFolder.add(cube.rotation, "y", 0, Math.PI).name("rotate Y");
 rotationFolder.add(cube.rotation, "z", 0, Math.PI).name("rotate Z");
 rotationFolder.open();
 
-//load 3D objects
+
 
 const stats = new Stats();
 document.body.appendChild(stats.dom);
@@ -169,6 +175,7 @@ function animate() {
   requestAnimationFrame(animate);
   setupKeyControls();
   onDoubleClick();
+
   /*  
   rotation animation
   cube.rotation.x += 0.01;
