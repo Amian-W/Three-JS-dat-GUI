@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import * as dat from "dat.gui";
 import Stats from "three/examples/jsm/libs/stats.module";
 const scene = new THREE.Scene();
@@ -11,14 +12,18 @@ const camera = new THREE.PerspectiveCamera(
   1000 //far
 );
 
-const canvas = document.querySelector('.webgl');
-const renderer = new THREE.WebGLRenderer({canvas},{ antialias: true }); // renderer - anti-aliasing
+// visualizes the frustum of a camera using a LineSegments
+/* const cameraHelper = new THREE.CameraHelper( camera );
+scene.add( cameraHelper ); */
+
+const canvas = document.querySelector(".webgl");
+const renderer = new THREE.WebGLRenderer({ canvas }, { antialias: true }); // renderer - anti-aliasing
 renderer.useLegacyLights = true;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight); //the width and height of the area we want to fill with our app
 document.body.appendChild(renderer.domElement);
 
-//Load a STL Model 
+//Load a STL Model
 const input = document.querySelector("input");
 input.addEventListener("change", (event) => {
   const file = event.target.files[0];
@@ -36,9 +41,8 @@ input.addEventListener("change", (event) => {
   reader.readAsArrayBuffer(file);
 });
 
-
 //change scene color
-renderer.setClearColor(0xf2f2f2);
+renderer.setClearColor(0xffead2);
 
 //display axes helper
 const axesHelper = new THREE.AxesHelper(20);
@@ -54,7 +58,7 @@ scene.add(light);
 
 // create a cube
 const geometry = new THREE.BoxGeometry(10, 10, 10, 5, 5, 5); //instance of boxGeometry class
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // a material to color it
+const material = new THREE.MeshBasicMaterial({ color: 0x8294c4 }); // a material to color it
 const cube = new THREE.Mesh(geometry, material); //fusion of geometry with material to result a mesh = 3D object
 
 scene.add(cube); // add mesh to the scene
@@ -62,9 +66,13 @@ scene.add(cube); // add mesh to the scene
 //set cube position
 cube.position.set(0, 5, 0);
 
+const controls = new TransformControls(camera, renderer.domElement);
+controls.attach(cube);
+scene.add(controls)
+
 //create a plane
 const planeGeometry = new THREE.PlaneGeometry(30, 30);
-const planeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+const planeMaterial = new THREE.MeshBasicMaterial({ color: 0xF2F2F2 });
 const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 scene.add(plane);
 //console.log(plane.position)
@@ -76,14 +84,14 @@ box.setFromCenterAndSize(
   new THREE.Vector3(30, 30, 30)
 );
 
-const boxHelper = new THREE.Box3Helper(box, 0xffff00);
+const boxHelper = new THREE.Box3Helper(box, 0x000000);
 scene.add(boxHelper);
 
 //match the plane to the grid
 plane.rotation.x = -0.5 * Math.PI;
 
 //add grid helper
-const gridHelper = new THREE.GridHelper(30, 30, "#0f0f0f", "#ffff00");
+const gridHelper = new THREE.GridHelper(30, 30, "#0f0f0f", "#DBDFEA");
 scene.add(gridHelper);
 
 camera.position.set(-10, 30, 30);
@@ -98,7 +106,7 @@ const boxFolder = gui.addFolder("Box");
 const meshOptions = {
   Color: cube.material.color.getHex(), //get the color of the mesh
   wireframe: false,
-  scale : 0,
+  scale: 0,
 };
 //box options
 const boxOptions = {
@@ -124,8 +132,8 @@ const scaleFolder = cubeFolder.addFolder("Scale");
 scaleFolder.add(cube.scale, "x", 0.1, 3).name("scale X");
 scaleFolder.add(cube.scale, "y", 0.1, 3).name("scale Y");
 scaleFolder.add(cube.scale, "z", 0.1, 3).name("scale Z");
-scaleFolder.add(meshOptions, 'scale',0.1, 3, 0.1).onChange( e => {
-  cube.scale.set(e,e,e);
+scaleFolder.add(meshOptions, "scale", 0.1, 2.5, 0.1).onChange((e) => {
+  cube.scale.set(e, e, e);
   cube.position.set(0, 0, 0);
 });
 scaleFolder.open();
@@ -137,13 +145,11 @@ rotationFolder.add(cube.rotation, "y", 0, Math.PI).name("rotate Y");
 rotationFolder.add(cube.rotation, "z", 0, Math.PI).name("rotate Z");
 rotationFolder.open();
 
-
-
 const stats = new Stats();
 document.body.appendChild(stats.dom);
 
-//moving object
-function setupKeyControls() {
+//moving object using keyboard events
+/* function setupKeyControls() {
   document.onkeydown = function (e) {
     switch (e.key) {
       case "ArrowRight":
@@ -158,13 +164,19 @@ function setupKeyControls() {
       case "ArrowDown":
         cube.position.z += 0.5;
         break;
+      case "u":
+        cube.position.y += 0.5;
+        break;
       case "d":
+        cube.position.y -= 0.5;
+        break;
+      case "r":
         cube.position.set(0, 5, 0);
         cube.rotation.set(0, 0, 0);
         break;
     }
   };
-}
+} */
 
 function onDoubleClick() {
   document.ondblclick = (e) => {
@@ -192,7 +204,7 @@ function onDoubleClick() {
 
 function animate() {
   requestAnimationFrame(animate);
-  setupKeyControls();
+  //setupKeyControls();
   onDoubleClick();
 
   /*  
