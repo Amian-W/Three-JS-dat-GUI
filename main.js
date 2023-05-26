@@ -8,7 +8,11 @@ import Stats from "three/examples/jsm/libs/stats.module";
 
 const r = 40;
 const rHalf = r / 2;
-
+var loadedMeshes = [];
+var loadedMesh;
+var transformControlsMode = "translate";
+const w = "px";
+const h = "2px";
 //------------------------------------------------------------camera
 const camera = new THREE.PerspectiveCamera(
   45, //field of view
@@ -24,6 +28,8 @@ const renderer = new THREE.WebGLRenderer({ canvas }, { antialias: true }); // re
 renderer.useLegacyLights = true;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight); //the width and height of the area we want to fill with our app
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.VSMShadowMap;
 document.body.appendChild(renderer.domElement);
 
 //------------------------------------------------------------scene
@@ -31,18 +37,33 @@ const scene = new THREE.Scene();
 //change scene color
 renderer.setClearColor(0xededed);
 
-//------------------------------------------------------------light
-//add directional light
-let light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(-30, 50, -30);
-scene.add(light);
-light.castShadow = true;
-light.shadow.mapSize.width = 2048;
-light.shadow.mapSize.height = 2048;
-light.shadow.camera.left = -70;
-light.shadow.camera.right = 70;
-light.shadow.camera.top = 70;
-light.shadow.camera.bottom = -70;
+//------------------------------------------------------------Ambient light
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+scene.add(ambientLight);
+
+//------------------------------------------------------------Directional lights
+//add directional lights
+let lightOne = new THREE.DirectionalLight(0xffffff, 0.4);
+lightOne.position.set(30, 50, 30);
+scene.add(lightOne);
+lightOne.castShadow = true;
+lightOne.shadow.mapSize.width = 512;
+lightOne.shadow.mapSize.height = 512;
+lightOne.shadow.camera.left = -70;
+lightOne.shadow.camera.right = 70;
+lightOne.shadow.camera.top = 70;
+lightOne.shadow.camera.bottom = -70;
+
+let lightTwo = new THREE.DirectionalLight(0xffffff, 0.3);
+lightTwo.position.set(-30, -50, -30);
+scene.add(lightTwo);
+//lightTwo.castShadow = true;
+lightTwo.shadow.mapSize.width = 512;
+lightTwo.shadow.mapSize.height = 512;
+lightTwo.shadow.camera.left = 70;
+lightTwo.shadow.camera.right = -70;
+lightTwo.shadow.camera.top = -70;
+lightTwo.shadow.camera.bottom = 70;
 
 //------------------------------------------------------------orbit controls
 //listen to DOM events on mouse and update camera position accordingly
@@ -62,7 +83,7 @@ function createBox() {
   helper.material.blending = THREE.AdditiveBlending;
   helper.material.transparent = true;
   //helper.material.linewidth = 2; //not working on windows
-   
+
   //------box helper
   let blockPlane = new THREE.Mesh(
     new THREE.BoxGeometry(),
@@ -72,7 +93,7 @@ function createBox() {
       opacity: 0.6,
     })
   );
- 
+
   blockPlane.position.set(0, -rHalf - 0.5, 0);
   blockPlane.scale.set(r, 1, r);
   blockPlane.material.transparent = true;
@@ -80,8 +101,9 @@ function createBox() {
 
   //grid
   const grid = new THREE.GridHelper(r, rHalf, "#3C4048", "#B2B2B2");
+  grid.DoubleSide = false;
   grid.translateY(-rHalf);
-  
+
   //axes
   const axes = new THREE.AxesHelper(r);
   axes.translateX(-rHalf - 0.01);
@@ -94,7 +116,7 @@ function createBox() {
   const planeMaterial = new THREE.MeshBasicMaterial({
     color: 0xdbdfea,
     transparent: true,
-    opacity: 0.1,
+    opacity: 0.5,
   });
   const floor = new THREE.Mesh(planeGeometry, planeMaterial);
   floor.material.side = THREE.DoubleSide;
@@ -104,46 +126,56 @@ function createBox() {
   floor.translateZ(-rHalf);
 
   const boxGroup = new THREE.Group();
-  boxGroup.add(floor,axes,grid,helper,blockPlane);
-  boxGroup.name = 'boxGroup';
-  console.log(boxGroup);
-  scene.add(boxGroup);
+  boxGroup.add(floor, axes, grid, helper, blockPlane);
+  boxGroup.name = "boxGroup";
+  boxGroup.receiveShadow = true;
 
+  scene.add(boxGroup);
+  console.log(scene.children);
 }
 createBox();
 
 //------------------------------------------------------------Mesh Loader
-var loadedMeshes = [];
-var loadedMesh;
+
 //STL Loader
-const input = document.querySelector("input");
-input.addEventListener("change", (event) => {
+const fileInput = document.getElementById("file");
+fileInput.addEventListener("change", (event) => {
   const files = event.target.files;
   //console.log(files);
   for (const file of files) {
     // Create a new FileReader object
-  const reader = new FileReader();
-  // Read the file
-  reader.readAsArrayBuffer(file);
-  reader.onload = function (event) {
-    const contents = event.target.result;
-    const loader = new STLLoader();
-    const geometry = loader.parse(contents);
-    const material = new THREE.MeshPhongMaterial({ color: 0xf9d949 });
-    loadedMesh = new THREE.Mesh(geometry, material);
-    loadedMesh.name = file.name;
-    //console.log(loadedMesh);
-    loadedMesh.castShadow = true;
-    loadedMesh.receiveShadow = true;
-    loadedMesh.layers.enable(1);
-    loadedMeshes.push(loadedMesh);
-    //console.log(loadedMesh);
-    scene.add(loadedMesh);
-    loadedMesh.translateY(-rHalf);
-    
+    const reader = new FileReader();
+    // Read the file
+    reader.readAsArrayBuffer(file);
+    reader.onload = function (event) {
+      const contents = event.target.result;
+      const loader = new STLLoader();
+      const geometry = loader.parse(contents);
+      const material = new THREE.MeshPhysicalMaterial({ color: 0xf9d949 });
+      loadedMesh = new THREE.Mesh(geometry, material);
+      loadedMesh.name = file.name;
+      loadedMesh.castShadow = true;
+      loadedMesh.receiveShadow = true;
+      loadedMesh.layers.enable(1);
+      const floor = scene.children[4];
+
+      //create a bounding box
+      /* const boundingB = new THREE.Box3(
+        new THREE.Vector3(),
+        new THREE.Vector3()
+      );
+      boundingB.setFromObject(loadedMesh);
+      const size = new THREE.Vector3();
+      boundingB.getSize(size);
+      loadedMesh.position.y = -rHalf - size.y/2; */
+      loadedMeshes.push(loadedMesh);
+      console.log(loadedMesh);
+      console.log(loadedMeshes);
+    };
   }
-  };
 });
+
+//------------------------------------------------------------Get Transform controls Mode
 
 //------------------------------------------------------------Raycasting
 //instanciate raycaster
@@ -169,7 +201,7 @@ function onPointerMove(event) {
     intersects[0].object.name &&
     intersects[0].object.isObject3D
   ) {
-    console.log(intersects[0]);
+    //console.log(intersects[0]);
     // remove the transform controls from the previous object
     if (transformControls) {
       transformControls.detach();
@@ -178,7 +210,11 @@ function onPointerMove(event) {
 
     // create a new transform controls object
     transformControls = new TransformControls(camera, renderer.domElement);
-    console.log(transformControls.enabled);
+    transformControls.setMode(transformControlsMode); // or "rotate" or "scale"
+
+    // Enable the controls
+    transformControls.enabled = true;
+
     // set the object to be transformed
     transformControls.attach(intersects[0].object);
     transformControls.getMode("rotate");
@@ -189,13 +225,21 @@ function onPointerMove(event) {
     transformControls.addEventListener("dragging-changed", function (event) {
       orbit.enabled = !event.value;
     });
-    window.addEventListener("keydown", function (event){
-      if(event.key == 'd'){
-        transformControls.detach();
-        loadedMeshes.filter(mesh => intersects[0].object = mesh);
+
+    document.addEventListener("keyup", function (event) {
+      if (event.key === "Backspace") {
+        console.log(intersects[0].object);
+        loadedMeshes.splice(loadedMeshes.indexOf(intersects[0].object), 1);
         scene.remove(intersects[0].object);
+        transformControls.detach();
+        console.log(loadedMeshes);
       }
-    })
+    });
+  } else {
+    if (transformControls) {
+      transformControls.detach();
+      scene.remove(transformControls);
+    }
   }
 }
 
@@ -300,6 +344,16 @@ function animate() {
   stats.update();
   renderer.render(scene, camera);
   window.addEventListener("click", onPointerMove);
+  loadedMeshes.forEach((object) => {
+    /* const boundingB = object.geometry.boundingBox;
+    //console.log(boundingB);
+    boundingB.copy(object.geometry.boundingBox).applyMatrix4(object.matrixWorld); */
+    scene.add(object);
+  });
+  const modeInput = document.getElementById("mode");
+  modeInput.addEventListener("change", (event) => {
+    transformControlsMode = event.target.value;
+  });
   //setupKeyControls();
   //console.log(camera.position);
 }

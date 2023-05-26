@@ -3,29 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <title>My first three.js app</title>
-    <style>
-      html,
-      body {
-        margin: 0;
-        display: grid;
-        place-items: center;
-        z-index: 1;
-      }
-      .webgl {
-        position: absolute;
-        top: 0;
-        left: 0;
-        z-index: 0;
-      }
-      div {
-        z-index: 3;
-        position: relative;
-      }
-    </style>
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
     <div>
-      <input type="file" name="" id="input" accept=".STL" multiple/>
+      <input type="file" id="file" accept=".STL" multiple/>
+      <select id="mode">
+        <option value="translate">Transition</option>
+        <option value="rotate">Rotation</option>
+        <option value="scale">Scaling</option>
+      </select>
     </div>
     <canvas class="webgl"></canvas>
     <script type="module" src="/main.js"></script>
