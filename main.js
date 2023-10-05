@@ -3,7 +3,6 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 import { TransformControls } from "three/examples/jsm/controls/TransformControls";
 import { DragControls } from "three/examples/jsm/controls/DragControls";
-import * as dat from "dat.gui";
 import Stats from "three/examples/jsm/libs/stats.module";
 
 const r = 40;
@@ -18,24 +17,26 @@ const camera = new THREE.PerspectiveCamera(
   45, //field of view
   window.innerWidth / window.innerHeight, //aspect ratio : width of the element divided by the height
   0.1, //near
-  1000 //far
+  100000 //far
 );
 camera.position.set(45, 45, 80);
 
 //------------------------------------------------------------renderer
 const canvas = document.querySelector(".webgl");
 const renderer = new THREE.WebGLRenderer({ canvas }, { antialias: true }); // renderer - anti-aliasing
-renderer.useLegacyLights = true;
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+//renderer.useLegacyLights = true;
+renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight); //the width and height of the area we want to fill with our app
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.VSMShadowMap;
 document.body.appendChild(renderer.domElement);
+renderer.gammaFactor = 2.2;
+//renderer.physicallyCorrectLights = true; // Enable physically correct lighting
 
 //------------------------------------------------------------scene
 const scene = new THREE.Scene();
 //change scene color
-renderer.setClearColor(0xededed);
+renderer.setClearColor(0xd0d0d0);
 
 //------------------------------------------------------------Ambient light
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -79,7 +80,7 @@ function createBox() {
   const helper = new THREE.BoxHelper(
     new THREE.Mesh(new THREE.BoxGeometry(r, r, r))
   );
-  helper.material.color.setHex(0x00ff00);
+  helper.material.color.setHex(0xffffff);
   helper.material.blending = THREE.AdditiveBlending;
   helper.material.transparent = true;
   //helper.material.linewidth = 2; //not working on windows
@@ -100,9 +101,15 @@ function createBox() {
   blockPlane.userData.ground = true;
 
   //grid
-  const grid = new THREE.GridHelper(r, rHalf, "#3C4048", "#B2B2B2");
+  const grid = new THREE.GridHelper(r, rHalf, "#B2B2B2", "#B2B2B2");
   grid.DoubleSide = false;
   grid.translateY(-rHalf);
+  // Create a nested grid helper
+  const nestedGridHelper = new THREE.GridHelper(r, 80, 0x141414, 0xf6f6f6);
+  // Move the nested grid helper below the main grid helper
+  nestedGridHelper.position.set(0, -0.01, 0);
+  // Add the nested grid helper as a child of the main grid helper
+  grid.add(nestedGridHelper);
 
   //axes
   const axes = new THREE.AxesHelper(r);
@@ -157,8 +164,17 @@ fileInput.addEventListener("change", (event) => {
       loadedMesh.castShadow = true;
       loadedMesh.receiveShadow = true;
       loadedMesh.layers.enable(1);
-      const floor = scene.children[4];
 
+      const boundingBox = new THREE.Box3();
+      boundingBox.setFromObject(loadedMesh);
+
+      /* let center = new THREE.Vector3
+      boundingBox.getCenter(center)
+
+      let castPoint = center.clone()
+      castPoint.y = box.min.y
+ */
+      console.log(boundingBox);
       //create a bounding box
       /* const boundingB = new THREE.Box3(
         new THREE.Vector3(),
@@ -311,8 +327,8 @@ dragControls.addEventListener("dragend", function (event) {
 } */
 
 //------------------------------------------------------------Stats
-const stats = new Stats();
-document.body.appendChild(stats.dom);
+/* const stats = new Stats();
+document.body.appendChild(stats.dom); */
 
 //------------------------------------------------------------Clone Mesh on DBclick
 function onDoubleClick() {
@@ -339,9 +355,17 @@ function onDoubleClick() {
   };
 }
 
+//------------------------------------------------------------Resize window
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+//------------------------------------------------------------Animate
 function animate() {
   requestAnimationFrame(animate);
-  stats.update();
+  /* stats.update(); */
   renderer.render(scene, camera);
   window.addEventListener("click", onPointerMove);
   loadedMeshes.forEach((object) => {
@@ -357,10 +381,10 @@ function animate() {
   //setupKeyControls();
   //console.log(camera.position);
 }
+
 animate();
 
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+/* For Material PLA 
+Formula (Dh): ( Length(mm) * Width(mm) * Height(mm) * 0,0005 )   + 8
+For Material ABS 
+Formula (Dh): ( Length(mm) * Width(mm) * Height(mm) * 0,0006 )   + 10 */

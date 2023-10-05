@@ -1,0 +1,31 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+.webgl {
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+nav {
+  float: left;
+  z-index: 3;
+  position: fixed;
+  grid-template-columns: 1fr;
+  grid-template-rows : 1fr;
+  place-items: center;
+  display: grid;
+}
+nav input, nav select {
+  justify-self: start;
+}
+.file{
+  display: none;
+}
